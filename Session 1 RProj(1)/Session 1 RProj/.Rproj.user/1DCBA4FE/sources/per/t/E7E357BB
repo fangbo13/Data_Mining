@@ -1,0 +1,32 @@
+{
+    "id": "E7E357BB",
+    "path": null,
+    "project_path": null,
+    "type": "r_dataframe",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1632222216269.0,
+    "source_on_save": false,
+    "relative_order": 2,
+    "properties": {
+        "expression": "housing.df",
+        "caption": "housing.df",
+        "totalObservations": "5802",
+        "displayedObservations": "5802",
+        "variables": "14",
+        "cacheKey": "E12060B2",
+        "object": "housing.df",
+        "environment": "",
+        "contentUrl": "grid_resource/gridviewer.html?env=&obj=housing.df&cache_key=E12060B2&max_cols=50",
+        "preview": "0"
+    },
+    "folds": "",
+    "lastKnownWriteTime": -1152921504606846976,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1632222216269,
+    "read_only": false,
+    "read_only_alternatives": []
+}
