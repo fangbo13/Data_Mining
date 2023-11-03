@@ -1,0 +1,32 @@
+{
+    "id": "0B633D67",
+    "path": null,
+    "project_path": null,
+    "type": "r_dataframe",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1635777203678.0,
+    "source_on_save": false,
+    "relative_order": 4,
+    "properties": {
+        "expression": "quantityOfDate",
+        "caption": "quantityOfDate",
+        "totalObservations": "89",
+        "displayedObservations": "89",
+        "variables": "2",
+        "cacheKey": "DE61AE84",
+        "object": "quantityOfDate",
+        "environment": "",
+        "contentUrl": "grid_resource/gridviewer.html?env=&obj=quantityOfDate&cache_key=DE61AE84&max_cols=50",
+        "preview": "0"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 0,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1635777203678,
+    "read_only": false,
+    "read_only_alternatives": []
+}

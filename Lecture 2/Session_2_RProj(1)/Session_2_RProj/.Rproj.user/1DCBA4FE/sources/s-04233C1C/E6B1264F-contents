@@ -1,0 +1,3 @@
+data <- read.csv("ultramarket.csv")
+sum(data$Total[data$Date == "1/18/2019"])
+?ts

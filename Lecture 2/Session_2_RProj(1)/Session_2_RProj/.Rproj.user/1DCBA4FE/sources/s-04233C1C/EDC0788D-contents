@@ -1,0 +1,785 @@
+
+universal_data <- read.csv(file = "UniversalBank.csv")
+head(universal_data)
+summary(universal_data)
+
+Education_1 <- ifelse(universal_data$Education == 1, 1,0)
+Education_2 <- ifelse(universal_data$Education == 2, 1,0)
+Education_3 <- ifelse(universal_data$Education == 3, 1,0)
+
+universal_data_new <- cbind(universal_data, Education_1,Education_2,Education_3)
+universal_data_final <- universal_data_new[, -c(1,5,8,10)]
+
+set.seed(1234)
+train_index <- sample(5000,5000*0.6, replace = FALSE)
+train_univ <- universal_data_final[train_index, ]
+valid_univ <- universal_data_final[-train_index, ]
+
+train_outcome <- universal_data_new[train_index, "Personal.Loan"]
+valid_outcome <- universal_data_new[-train_index, "Personal.Loan"]
+summary(train_univ$Personal.Loan)
+summary(valid_univ$Personal.Loan)
+
+results <- matrix(0,10,2)
+for (i in 1:10) {
+  model <- knn(train = train_univ, test = train_univ, cl =  train_outcome, k = i)
+  model2 <- knn(train = train_univ, test = valid_univ, cl =  train_outcome, k = i)
+  tab <- table(valid_outcome, model2)
+  tab2 <- table(train_outcome, model)
+  results[i,] <- c(accuracy(tab), accuracy(tab2))
+}
+
+
+final_model <- knn(train = train_univ, test = valid_univ, cl =  train_outcome, k = 3)
+table(valid_outcome, final_model)
+
+new_case_model <- knn(train = train_univ, test = new_case, cl =  train_outcome, k = 3)
+
+new_case <- data.frame(Age = 40, Experience = 10, Income = 84, Family = 2, CCAvg = 2, Education_1 = 0,
+                       Education_2 = 1, Education_3 = 0, Mortgage = 0, Securities.Account = 0,
+                       CD.Account = 0, Online = 1, CreditCard = 1)
+
+
+new_case_prediction <- knn(train = train_univ, test = new_case, cl =  train_outcome, k = 1)
+
+
+set.seed(1234)
+train_index <- sample(5000,2500)
+valid_index <- sample(setdiff(1:5000,train_index), 2500 *0.6)
+test_index <- setdiff(1:5000, c(train_index,valid_index ))
+train_univ <- universal_data_final[train_index, ]
+valid_univ <- universal_data_final[valid_index, ]
+test_univ <- universal_data_final[test_index, ]
+
+train_outcome <- universal_data_new[train_index, "Personal.Loan"]
+valid_outcome <- universal_data_new[valid_index, "Personal.Loan"]
+test_outcome <- universal_data_new[test_index, "Personal.Loan"]
+
+valid_case_prediction <- knn(train = train_univ, test = valid_univ, cl =  train_outcome, k = 3)
+test_case_prediction <- knn(train = train_univ, test = test_univ, cl =  train_outcome, k = 3)
+
+table(valid_outcome, valid_case_prediction)
+
+
+train_outcome <- universal_data_new[train_index, "Personal.Loan"]
+valid_outcome <- universal_data_new[-train_index, "Personal.Loan"]
+summary(train_univ$Personal.Loan)
+summary(valid_univ$Personal.Loan)
+
+
+trControl <- trainControl(method = "cv", number = 5)
+train(train_univ, 
+      method = "knn", 
+      tuneGrid = expand.grid(k = 1:10), trControl, metric = "Accuracy",train_outcome )
+library(caret)
+caret::
+#### KNN ----
+
+library(caret)
+mower.df <- read.csv("RidingMowers.csv")
+set.seed(111)
+train.index <- sample(row.names(mower.df), 0.6*dim(mower.df)[1])  
+valid.index <- setdiff(row.names(mower.df), train.index)  
+train.df <- mower.df[train.index, ]
+valid.df <- mower.df[valid.index, ]
+## new household
+new.df <- data.frame(Income = 60, Lot_Size = 20)
+
+## scatter plot
+plot(Lot_Size ~ Income, data=train.df, 
+     pch=ifelse(train.df$Ownership=="Owner", 1, 3))
+plot(Lot_Size ~ Income, data=train.df, 
+     pch=ifelse(train.df$Ownership=="Owner", 1, 3), 
+     xlim = c(40,100), ylim = c(0,60))
+text(train.df$Income, train.df$Lot_Size, rownames(train.df), pos=4)
+text(60, 20, "X")
+legend("topleft", c("owner", "non-owner", "newhousehold"), pch = c(1, 3, 4))
+
+dist(rbind(train.df[,1:2], new.df))
+
+#### Table 7.2
+mower.df <- read.csv("RidingMowers.csv")
+# set.seed(111)
+mower.df$Ownership[mower.df$Ownership == "Nonowner"] <- 0
+mower.df$Ownership[mower.df$Ownership == "Owner"] <- 1
+mower.df$Ownership <- as.numeric(mower.df$Ownership)
+train.index <- sample(row.names(mower.df), 0.6*dim(mower.df)[1])  
+valid.index <- setdiff(row.names(mower.df), train.index)  
+train.df <- mower.df[train.index, ]
+valid.df <- mower.df[valid.index, ]
+# initialize normalized training, validation data, complete data frames to originals
+
+train.norm.df <- train.df
+valid.norm.df <- valid.df
+mower.norm.df <- mower.df
+# use preProcess() from the caret package to normalize Income and Lot_Size.
+norm.values <- preProcess(train.df[, 1:2], method=c("center", "scale"))
+train.norm.df[, 1:2] <- predict(norm.values, train.df[, 1:2])
+valid.norm.df[, 1:2] <- predict(norm.values, valid.df[, 1:2])
+
+
+# use knn() to compute knn. 
+# knn() is available in library FNN (provides a list of the nearest neighbors)
+# and library class (allows a numerical output variable).
+library(FNN)
+plot(Lot_Size ~ Income, data=train.norm.df, pch=ifelse(train.norm.df$Ownership=="1", 1, 3))
+text(train.norm.df$Income, train.norm.df$Lot_Size, rownames(train.norm.df), pos=4)
+nn <- knn(train = train.norm.df[, 1:2], test = valid.norm.df[, 1:2], 
+          cl = train.norm.df[, 3], k = 3)
+points(valid.norm.df[1,1:2], pch = 4)
+row.names(train.df)[attr(nn, "nn.index")[1,]]
+table(valid.norm.df$Ownership, as.numeric(as.vector(nn)))
+
+### Table 7.3
+
+
+# initialize a data frame with two columns: k, and accuracy.
+accuracy.df <- data.frame(k = seq(1, 14, 1), accuracy = rep(0, 14))
+
+# compute knn for different k on validation.
+for(i in 1:14) {
+  knn.pred <- knn(train.norm.df[, 1:2], valid.norm.df[, 1:2], 
+                  cl = train.norm.df[, 3], k = i)
+  accuracy.df[i, 2] <- confusionMatrix( factor(knn.pred , levels = c(0,1)), factor(valid.norm.df[, 3], levels = c(0,1)))$overall[1] 
+}
+accuracy.df
+
+
+
+#### Table 7.4
+mower.norm.df[, 1:2] <- predict(preProcess(mower.df[, 1:2],  method=c("center", "scale")), mower.df[,1:2])
+new.norm.df <- predict(preProcess(mower.df[, 1:2],  method=c("center", "scale")), new.df)
+knn.pred.new <- knn(mower.norm.df[, 1:2], new.norm.df, 
+                    cl = mower.norm.df[, 3], k = 4)
+four_nearest_neighbours <- attr(knn.pred.new, "nn.index")
+
+plot(Lot_Size ~ Income, data=mower.norm.df, pch=ifelse(mower.norm.df$Ownership==1, 1, 3), xlim = c(-2,2), ylim = c(-2,2))
+text(mower.norm.df$Income, mower.norm.df$Lot_Size, rownames(mower.norm.df), pos=4)
+text(new.norm.df$Income, new.norm.df$Lot_Size, "X")
+legend("topleft", c("owner", "non-owner", "newhousehold"), pch = c(1, 3, 4))
+
+# Conduct classification (probability)
+mean(mower.norm.df$Ownership[four_nearest_neighbours])
+# Conduct classification (binary)
+median(mower.norm.df$Ownership[four_nearest_neighbours])
+
+# Conduct a prediction of income for new datapoint
+std.pred <- mean(mower.norm.df$Income[four_nearest_neighbours])
+scale <- preProcess(mower.df[, 1:2],  method=c("center", "scale"))
+unstd.pred <- (std.pred[1] * scale$std[1]) + scale$mean[1]
+
+
+# Automatically calculating k
+df <- data(iris) 
+head(iris) 
+
+# Randomly select sample
+ran <- sample(1:nrow(iris), 0.6 * nrow(iris)) 
+
+##the normalization function is created
+nor <-function(x) { (x -min(x))/(max(x)-min(x))   }
+
+##Run nomalization on first 4 coulumns of dataset because they are the predictors
+iris_norm <- as.data.frame(lapply(iris[,c(1,2,3,4)], nor))
+lapply(iris[,c(1,2,3,4)], nor)
+summary(iris_norm)
+##   Sepal.Length     Sepal.Width      Petal.Length     Petal.Width     
+##  Min.   :0.0000   Min.   :0.0000   Min.   :0.0000   Min. :0.00
+##  1st Qu.:0.2222   1st Qu.:0.3333   1st Qu.:0.1017   1st Qu.:0.08  
+##  Median :0.4167   Median :0.4167   Median :0.5678   Median :0.50
+##  Mean   :0.4287   Mean   :0.4406   Mean   :0.4675   Mean   :0.45
+##  3rd Qu.:0.5833   3rd Qu.:0.5417   3rd Qu.:0.6949   3rd Qu.:0.70
+##  Max.   :1.0000   Max.   :1.0000   Max.   :1.0000   Max.   :1.00
+ran <- sample(1:nrow(iris), 0.6 * nrow(iris)) 
+##extract training set
+iris_train <- iris_norm[ran,] 
+##extract testing set
+iris_test <- iris_norm[-ran,] 
+##extract 5th column of train dataset because it will be used as 'cl' argument in knn function.
+iris_target_category <- iris[ran,5]
+##extract 5th column if test dataset to measure the accuracy
+iris_test_category <- iris[-ran,5]
+##load the package class
+library(class)
+##run knn function
+pr <- knn(iris_train,iris_test,cl=iris_target_category,k=13)
+
+##create confusion matrix
+tab <- table(pr,iris_test_category)
+
+##this function divides the correct predictions by total number of predictions that tell us how accurate teh model is.
+
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy(tab)
+## [1] 80
+mat <- matrix(0,15,2)
+accuracy <- function(x) {
+  sum(diag(x) / (sum(rowSums(x)))) * 100
+}
+for (j in 1:10) {
+  set.seed(j)
+  ran <- sample(1:nrow(iris), 0.6 * nrow(iris))
+  ##extract training set
+  iris_train <- iris_norm[ran, ]
+  ##extract testing set
+  iris_test <- iris_norm[-ran, ]
+  ##extract 5th column of train dataset because it will be used as 'cl' argument in knn function.
+  iris_target_category <- iris[ran, 5]
+  ##extract 5th column if test dataset to measure the accuracy
+  iris_test_category <- iris[-ran, 5]
+  
+  for (i in 1:15) {
+    pt <- knn(iris_train, iris_train, cl = iris_target_category, k = i)
+    pv <- knn(iris_train, iris_test, cl = iris_target_category, k = i)
+    tab <- table(pt, iris_target_category)
+    tab2 <- table(pv, iris_test_category)
+    
+    mat[i, 1] <- accuracy(tab)
+    mat[i, 2] <- accuracy(tab2)
+    
+  }
+  print(round(mat),2)
+  cat("\n")
+}
+## Logit ----
+
+#### Table 10.2
+
+bank.df <- read.csv("UniversalBank.csv")
+bank.df <- bank.df[ , -c(1, 5)]  # Drop ID and zip code columns.
+# treat Education as categorical (R will create dummy variables)
+bank.df$Education <- factor(bank.df$Education, levels = c(1, 2, 3), 
+                            labels = c("Undergrad", "Graduate", "Advanced/Professional"))
+
+# partition data
+set.seed(32)
+train.index <- sample(c(1:dim(bank.df)[1]), dim(bank.df)[1]*0.6)  
+train.df <- bank.df[train.index, ]
+valid.df <- bank.df[-train.index, ]
+
+# run logistic regression
+# use glm() (general linear model) with family = "binomial" to fit a logistic 
+# regression.
+logit.reg <- glm(Personal.Loan ~ ., data = train.df, family = "binomial") 
+options(scipen=999)
+summary(logit.reg)
+
+
+#### Table 10.3
+
+# use predict() with type = "response" to compute predicted probabilities. 
+logit.reg.pred <- predict(logit.reg, valid.df[, -8], type = "response")
+
+# first 5 actual and predicted records
+data.frame(actual = valid.df$Personal.Loan[1:5], predicted = logit.reg.pred[1:5])
+
+
+
+#### Figure 10.3
+
+library(gains)
+gain <- gains(valid.df$Personal.Loan, logit.reg.pred, groups=10)
+
+# plot lift chart
+plot(c(0,gain$cume.pct.of.total*sum(valid.df$Personal.Loan))~c(0,gain$cume.obs), 
+     xlab="# cases", ylab="Cumulative", main="", type="l")
+lines(c(0,sum(valid.df$Personal.Loan))~c(0, dim(valid.df)[1]), lty=2)
+
+# compute deciles and plot decile-wise chart
+heights <- gain$mean.resp/mean(valid.df$Personal.Loan)
+midpoints <- barplot(heights, names.arg = gain$depth, ylim = c(0,9), 
+                     xlab = "Percentile", ylab = "Mean Response", main = "Decile-wise lift chart")
+# add labels to columns
+text(midpoints, heights+0.5, labels=round(heights, 1), cex = 0.8)
+
+#### Figure 10.4
+
+# code for generating top-right bar chart
+# for other plots, replace aggregating variable by setting argument by =  in 
+# aggregate(). 
+# in function barplot(), set the x-label (argument xlab =) and y-label 
+# (argument names.arg =) 
+# according to the variable of choice.  
+
+barplot(aggregate(delays.df$Flight.Status == "delayed", by = list(delays.df$DAY_WEEK), 
+                  mean, rm.na = T)[,2], xlab = "Day of Week", ylab = "Average Delay", 
+        names.arg = c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"))
+
+
+
+#### Figure 10.5
+
+library(reshape)
+library(ggplot2)
+# create matrix for plot
+delays.df$isDelay <- 1 * (delays.df$Flight.Status == "delayed")
+
+agg <- aggregate(delays.df$isDelay, 
+                 by = list(delays.df$DAY_WEEK, delays.df$CARRIER, delays.df$ORIGIN), 
+                 FUN = mean, na.rm = TRUE)
+m <- melt(agg)
+names(m)[1:3] <- c("DAY_WEEK", "CARRIER", "ORIGIN")
+
+# plot with ggplot
+# use facet_grid() with arguments scales = "free" and space = "free" to skip 
+# missing values.
+ggplot(m, aes(y = CARRIER, x = DAY_WEEK, fill = value)) +  geom_tile() + 
+  facet_grid(ORIGIN ~ ., scales = "free", space = "free") + 
+  scale_fill_gradient(low="white", high="black")
+
+
+
+#### Table 10.6
+
+delays.df <- read.csv("FlightDelays.csv")
+
+# transform variables and create bins
+delays.df$DAY_WEEK <- factor(delays.df$DAY_WEEK, levels = c(1:7), 
+                             labels = c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"))
+delays.df$CRS_DEP_TIME <- factor(round(delays.df$CRS_DEP_TIME/100))
+
+# create reference categories
+delays.df$ORIGIN <- relevel(as.factor(delays.df$ORIGIN), ref = "IAD")
+delays.df$DEST <- relevel(as.factor(delays.df$DEST), ref = "LGA")
+delays.df$CARRIER <- relevel(as.factor(delays.df$CARRIER), ref = "US")
+delays.df$DAY_WEEK <- relevel(as.factor(delays.df$DAY_WEEK), ref = "Wed")
+delays.df$isDelay <- 1 * (delays.df$Flight.Status == "delayed")
+
+# delays.df <- cbind(delays.df$isDelay_mod, delays.df$DAY_WEEK_mod, delays.df$CARRIER_mod,
+                   # delays.df$DEST_mod, delays.df$ORIGIN_mod, delays.df$CRS_DEP_TIME_mod,
+                   # delays.df$DAY_WEEK_mod)
+
+# create training and validation sets
+selected.var <- c(10, 1, 8, 4, 2, 9, 14)
+train.index <- sample(c(1:dim(delays.df)[1]), dim(delays.df)[1]*0.6)  
+train.df <- delays.df[train.index, selected.var]
+valid.df <- delays.df[-train.index, selected.var]
+
+# run logistic model, and show coefficients and odds
+lm.fit <- glm(isDelay ~ ., data = train.df, family = "binomial")
+data.frame(summary(lm.fit)$coefficients, odds = exp(coef(lm.fit))) 
+
+round(data.frame(summary(lm.fit)$coefficients, odds = exp(coef(lm.fit))), 5)
+
+lm.fit$fitted.values[1:5]
+
+#### Figure 10.6
+
+library(gains)
+pred <- predict(lm.fit, valid.df, type = "response")
+
+gain <- gains(valid.df$isDelay, pred, groups=100)
+
+plot(c(0,gain$cume.pct.of.total*sum(valid.df$isDelay))~
+       c(0,gain$cume.obs), 
+     xlab="# cases", ylab="Cumulative", main="", type="l")
+lines(c(0,sum(valid.df$isDelay))~c(0, dim(valid.df)[1]), lty=2)
+
+pred_thresh <-  ifelse(pred > 0.5, 1, 0)
+sum(train.df$isDelay == 1)
+accuracy(table(pred_thresh, valid.df$isDelay))
+
+ #### Table 10.8
+
+# fewer predictors
+delays.df$Weekend <- delays.df$DAY_WEEK %in% c("Sun", "Sat")
+delays.df$CARRIER_CO_MQ_DH_RU <- delays.df$CARRIER %in% c("CO", "MQ", "DH", "RU")
+delays.df$MORNING <- delays.df$CRS_DEP_TIME %in% c(6, 7, 8, 9)
+delays.df$NOON <- delays.df$CRS_DEP_TIME %in% c(10, 11, 12, 13)
+delays.df$AFTER2P <- delays.df$CRS_DEP_TIME %in% c(14, 15, 16, 17, 18)
+delays.df$EVENING <- delays.df$CRS_DEP_TIME %in% c(19, 20)
+
+
+set.seed(1)  # Set the seed for the random number generator for reproducing the 
+# partition.
+train.index <- sample(c(1:dim(delays.df)[1]), dim(delays.df)[1]*0.6)  
+valid.index <- setdiff(c(1:dim(delays.df)[1]), train.index)  
+train.df <- delays.df[train.index, ]
+valid.df <- delays.df[-train.index, ]
+
+lm.fit <- glm(isDelay ~ Weekend + Weather + CARRIER_CO_MQ_DH_RU + MORNING  +  NOON + 
+                AFTER2P + EVENING, data = train.df.bal, family = "binomial")
+summary(lm.fit)
+sample(rownames(train.df[train.df$isDelay == 0,]),251)
+
+train.df.bal <- rbind(train.df[train.df$isDelay == 1,],
+                      train.df[sample(rownames(train.df[train.df$isDelay == 0,]),251),])
+
+# evaluate
+pred2 <- predict(lm.fit, valid.df, type = "response")
+pred[1:5]
+pred2[1:5]
+confusionMatrix(as.factor(ifelse(pred2 > 0.4, 1, 0)), as.factor(valid.df$isDelay))
+
+
+
+#### Table 10.9
+
+reg <- lm(Personal.Loan ~ Income + Family + CD.Account, data = bank.df)
+summary(reg)
+
+
+
+#### Table 10.10 
+
+summary(logit.reg)
+
+
+
+#### Figure 10.9
+
+## note: run after Table 10.3, before adding more varuables
+confusionMatrix(as.factor(ifelse(logit.reg$fitted > 0.5, 1, 0)), as.factor(train.df[,8]))
+
+
+
+#### Table 10.11
+
+# simulate simple data
+Y = rep(c("a", "b", "c"), 100)
+x = rep(c(1, 2, 3), 100) +  rnorm(300, 0, 1)
+
+# ordinal logistic regression
+library(MASS)
+Y = factor(Y, ordered = T)
+polr(Y ~ x)
+
+# nominal logistic regression
+library(nnet)
+Y = factor(Y, ordered = F)
+multinom(Y ~ x)
+
+
+###########################################
+## Chapter 7 - k-Nearest Neighbors (kNN) ## 
+###########################################
+
+#NOTE: Prepared with R version 3.6.0
+
+#set the working directory to appropriate folder on your machine, so as to 
+#access the data files.
+
+#load the required libraries/packages for this chapter
+#Install the package(s) below once on your machine. To do so, uncomment the 
+#install.packages line(s) below.
+
+#install.packages("class")
+#install.packages("e1071")
+#install.packages("caret")
+library(class)
+library(caret)
+library(e1071)
+
+## Problem 7.2 Personal Loan Acceptance. 
+##Universal Bank is a relatively young bank growing rapidly in terms of overall 
+##customer acquisition. The majority of these customers are liability customers
+##(depositors) with varying sizes of relationship with the bank. The customer 
+##base of asset customers (borrowers) is quite small, and the bank is interested
+##in expanding this base rapidly to bring in more loan business. In particular,
+##it wants to explore ways of converting its liability customers to personal 
+##loan customers (while retaining them as depositors).
+
+##A campaign that the bank ran last year for liability customers showed a 
+##healthy conversion rate of over 9% success. This has encouraged the retail 
+##marketing department to devise smarter campaigns with better target marketing. 
+##The goal is to use k-NN to predict whether a new customer will accept a loan 
+##offer. This will serve as the basis for the design of a new campaign. 
+
+##The file UniversalBank.csv contains data on 5000 customers. The data include 
+##customer demographic information (age, income, etc.), the customer's 
+##relationship with the bank (mortgage, securities account, etc.), and the 
+##customer response to the last personal loan
+##campaign (Personal Loan). Among these 5000 customers, only 480 (= 9.6%) 
+##accepted the personal loan that was offered to them in the earlier campaign.
+##Partition the data into training (60%) and validation (40%) sets. 
+
+#load the data
+universal.df <- read.csv("UniversalBank.csv")
+dim(universal.df)
+t(t(names(universal.df)))
+
+#partition the data
+set.seed(1)  
+train.index <- sample(row.names(universal.df), 0.6*dim(universal.df)[1])
+valid.index <- setdiff(row.names(universal.df), train.index)  
+train.df <- universal.df[train.index, -c(1, 5)]
+valid.df <- universal.df[valid.index, -c(1, 5)]
+t(t(names(train.df)))
+
+## 7.2.a Consider the following customer:
+##Age = 40, Experience = 10, Income = 84, Family = 2, CCAvg = 2, Education = 2, 
+##Mortgage = 0, Securities Account = 0, CD Account = 0, Online = 1, and
+##Credit Card = 1. 
+##Perform a k-NN classification with all predictors except ID and ZIP code using
+##k = 1. 
+##Note that using KNN in the class library, categorical predictors are 
+##automatically handled.  If you use FNN, you need to handle categorical 
+##variables separately as follows:
+##> universal.df$Education <- as.factor(universal.df$Education)
+##Use the default cutoff value of 0.5. 
+##How would this customer be classified?
+
+new.cust <- data.frame(Age = 40,                
+                       Experience = 10,     
+                       Income = 84,   
+                       Family = 2,          
+                       CCAvg = 2,          
+                       Education = 2,        
+                       Mortgage = 0,           
+                       Securities.Account = 0, 
+                       CD.Account = 0, 
+                       Online = 1,            
+                       CreditCard = 1)
+
+#new.cust$Education <- as.factor(new.cust$Education)
+
+# normalize the data
+train.norm.df <- train.df[,-8]
+valid.norm.df <- valid.df[,-8]
+
+new.cust.norm <- new.cust
+norm.values <- preProcess(train.df[, -8], method=c("center", "scale"))
+train.norm.df <- predict(norm.values, train.df[, -8])
+valid.norm.df <- predict(norm.values, valid.df[, -8])
+new.cust.norm <- predict(norm.values, new.cust.norm)
+
+
+knn.pred <- class::knn(train = train.norm.df, 
+                       test = new.cust.norm, 
+                       cl = train.df$Personal.Loan, k = 1)
+knn.pred
+#> knn.pred
+#[1] 0
+#Levels: 0 1
+
+#From the output we conclude that the above customer is classified as belonging
+#to the "loan not accepted" group.
+
+## 7.2.b What is a choice of k that balances between overfitting and ignoring 
+##the predictor information?
+
+library(e1071)
+# optimal k
+accuracy.df <- data.frame(k = seq(1, 15, 1), overallaccurace = rep(0, 15))
+for(i in 1:15) {
+  knn.pred <- class::knn(train = train.norm.df, 
+                         test = valid.norm.df, 
+                         cl = train.df$Personal.Loan, k = i)
+  accuracy.df[i, 2] <- confusionMatrix(knn.pred, 
+                                       as.factor(valid.df$Personal.Loan))$overall[1]
+}
+
+which(accuracy.df[,2] == max(accuracy.df[,2])) 
+#> which(accuracy.df[,2] == max(accuracy.df[,2]))
+#[1] 3
+
+accuracy.df
+#> accuracy.df
+#    k overallaccurace
+#1   1          0.9560
+#2   2          0.9490
+#3   3          0.9585
+#4   4          0.9540
+#5   5          0.9550
+#6   6          0.9540
+#7   7          0.9540
+#8   8          0.9540
+#9   9          0.9540
+#10 10          0.9495
+#11 11          0.9505
+#12 12          0.9490
+#13 13          0.9475
+#14 14          0.9470
+#15 15          0.9465
+
+# best k = 3. The value of k that balances between overfitting (k too small) 
+#and ignoring the predictor information (k too large) is 3.
+
+## 7.2.c Show the confusion matrix for the validation data that results from 
+##using the best k.
+
+#knn with k = 3
+knn.pred <- class::knn(train = train.norm.df, 
+                       test = valid.norm.df, 
+                       cl = train.df$Personal.Loan, k = 3)
+confusionMatrix(knn.pred, as.factor(valid.df$Personal.Loan), positive = "1")
+#> confusionMatrix(knn.pred, as.factor(valid.df$Personal.Loan), positive = "1")
+#Confusion Matrix and Statistics
+#
+#           Reference
+# Prediction    0    1
+#          0 1782   70
+#          1   13  135
+#
+#               Accuracy : 0.9585          
+#                 95% CI : (0.9488, 0.9668)
+#    No Information Rate : 0.8975          
+#    P-Value [Acc > NIR] : < 2.2e-16       
+#
+#                  Kappa : 0.7428          
+#
+# Mcnemar's Test P-Value : 7.906e-10       
+#
+#            Sensitivity : 0.6585          
+#            Specificity : 0.9928          
+#         Pos Pred Value : 0.9122          
+#         Neg Pred Value : 0.9622          
+#             Prevalence : 0.1025          
+#         Detection Rate : 0.0675          
+#   Detection Prevalence : 0.0740          
+#      Balanced Accuracy : 0.8256          
+#
+#       'Positive' Class : 1
+#
+
+## 7.2.d. Consider the following customer: Age = 40, Experience = 10, 
+##Income = 84, Family = 2, CCAvg = 2, Education = 2, Mortgage = 0, 
+##Securities Account = 0, CD Account = 0, Online = 1 and Credit Card = 1. 
+##Classify the customer using the best k. 
+
+# predict new customer with k = 3
+knn.pred <- class::knn(train = train.norm.df, 
+                       test = new.cust.norm, 
+                       cl = train.df$Personal.Loan, k = 3)
+knn.pred
+#> knn.pred
+#[1] 0
+#Levels: 0 1
+
+## 7.2.e Repartition the data, this time into training, validation, and test 
+##sets (50% : 30% : 20%). Apply the k-NN method with the k chosen above. 
+##Compare the confusion matrix of the test set with that of the training and 
+##validation sets. Comment on the differences and their reason. 
+
+# 3-way partition
+set.seed(1)  
+train.index <- sample(row.names(universal.df), 0.5*dim(universal.df)[1])
+valid.index <- sample(setdiff(row.names(universal.df), train.index), 
+                      0.3*dim(universal.df)[1])
+test.index <-  setdiff(row.names(universal.df), c(train.index, valid.index)) 
+train.df <- universal.df[train.index, -c(1, 5)]
+valid.df <- universal.df[valid.index, -c(1, 5)]
+test.df <- universal.df[test.index, -c(1, 5)]
+
+# normalization
+train.norm.df <- train.df[,-8]
+valid.norm.df <- valid.df[,-8]
+test.norm.df <- test.df[,-8]
+norm.values <- preProcess(train.df[, -8], method=c("center", "scale"))
+train.norm.df <- predict(norm.values, train.df[, -8])
+valid.norm.df <- predict(norm.values, valid.df[, -8])
+test.norm.df <- predict(norm.values, test.df[, -8])
+
+# predictions on train
+knn.predt <- class::knn(train = train.norm.df, 
+                        test = train.norm.df, 
+                        cl = train.df$Personal.Loan, k = 3)
+
+confusionMatrix(knn.predt, as.factor(train.df$Personal.Loan), positive = "1")
+#> confusionMatrix(knn.predt, as.factor(train.df$Personal.Loan), positive = "1")
+#Confusion Matrix and Statistics
+#
+#          Reference
+#Prediction    0    1
+#         0 2259   63
+#         1    9  169
+#
+#               Accuracy : 0.9712          
+#                 95% CI : (0.9639, 0.9774)
+#    No Information Rate : 0.9072          
+#    P-Value [Acc > NIR] : < 2.2e-16       
+#
+#                  Kappa : 0.809           
+#
+# Mcnemar's Test P-Value : 4.208e-10       
+#
+#            Sensitivity : 0.7284          
+#            Specificity : 0.9960          
+#         Pos Pred Value : 0.9494          
+#         Neg Pred Value : 0.9729          
+#             Prevalence : 0.0928          
+#         Detection Rate : 0.0676          
+#   Detection Prevalence : 0.0712          
+#      Balanced Accuracy : 0.8622          
+#
+#       'Positive' Class : 1
+
+# predictions on validation
+knn.predv <- class::knn(train = train.norm.df, 
+                        test = valid.norm.df, 
+                        cl = train.df$Personal.Loan, k = 3)
+
+confusionMatrix(knn.predv, as.factor(valid.df$Personal.Loan), positive = "1")
+#> confusionMatrix(knn.predv, as.factor(valid.df$Personal.Loan), positive = "1")
+#Confusion Matrix and Statistics
+#
+#           Reference
+# Prediction    0    1
+#          0 1357   47
+#          1    7   89
+#
+#                Accuracy : 0.964           
+#                  95% CI : (0.9533, 0.9728)
+#     No Information Rate : 0.9093          
+#     P-Value [Acc > NIR] : < 2.2e-16       
+#
+#                   Kappa : 0.7484          
+#
+#  Mcnemar's Test P-Value : 1.113e-07       
+#                                          
+#             Sensitivity : 0.65441         
+#             Specificity : 0.99487         
+#          Pos Pred Value : 0.92708         
+#          Neg Pred Value : 0.96652         
+#              Prevalence : 0.09067         
+#          Detection Rate : 0.05933         
+#    Detection Prevalence : 0.06400         
+#       Balanced Accuracy : 0.82464         
+#                                          
+#        'Positive' Class : 1
+
+# predictions on test
+knn.predtt <- class::knn(train = train.norm.df, 
+                         test = test.norm.df, 
+                         cl = train.df$Personal.Loan, k = 3)
+confusionMatrix(knn.predtt, as.factor(test.df$Personal.Loan), positive = "1")
+#> confusionMatrix(knn.predtt, as.factor(test.df$Personal.Loan), positive = "1")
+#Confusion Matrix and Statistics
+#
+#           Reference
+# Prediction   0   1
+#          0 882  39
+#          1   6  73
+#
+#                Accuracy : 0.955          
+#                  95% CI : (0.9402, 0.967)
+#     No Information Rate : 0.888          
+#     P-Value [Acc > NIR] : 4.309e-14      
+#
+#                   Kappa : 0.7403         
+#
+#  Mcnemar's Test P-Value : 1.840e-06      
+#                                         
+#             Sensitivity : 0.6518         
+#             Specificity : 0.9932         
+#          Pos Pred Value : 0.9241         
+#          Neg Pred Value : 0.9577         
+#              Prevalence : 0.1120         
+#          Detection Rate : 0.0730         
+#    Detection Prevalence : 0.0790         
+#       Balanced Accuracy : 0.8225         
+#                                         
+#        'Positive' Class : 1
+
+#We choose the best k, which minimizes the misclassification rate in the 
+#validation set. Our best k is 3. From the above confusion matrices we observe
+#the following:
+
+#The error rate increases from the training set to the validation set, and again
+#from the validation set to the test set.  The differences are small, but this
+#decreased performance, at least in the test set, is not unexpected - both the 
+#training and validation sets are used in setting the optimal k so there can be 
+#overfitting.  The test set was not used to select the optimal k, so reflects
+#expected performance with new data, slightly less accurate.
+
+#############################

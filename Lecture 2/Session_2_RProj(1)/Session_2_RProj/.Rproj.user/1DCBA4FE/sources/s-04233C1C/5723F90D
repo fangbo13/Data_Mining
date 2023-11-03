@@ -1,0 +1,32 @@
+{
+    "id": "5723F90D",
+    "path": null,
+    "project_path": null,
+    "type": "r_dataframe",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1635777096676.0,
+    "source_on_save": false,
+    "relative_order": 3,
+    "properties": {
+        "expression": "ultramarket_data",
+        "caption": "ultramarket_data",
+        "totalObservations": 1000,
+        "displayedObservations": 1000,
+        "variables": 16,
+        "cacheKey": "5F03C101",
+        "object": "ultramarket_data",
+        "environment": "",
+        "contentUrl": "grid_resource/gridviewer.html?env=&obj=ultramarket_data&cache_key=5F03C101&max_cols=50",
+        "preview": 0
+    },
+    "folds": "",
+    "lastKnownWriteTime": 12884901891,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1635777096676,
+    "read_only": false,
+    "read_only_alternatives": []
+}

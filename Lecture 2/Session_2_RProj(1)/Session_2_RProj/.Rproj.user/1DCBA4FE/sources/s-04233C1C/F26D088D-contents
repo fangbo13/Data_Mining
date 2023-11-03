@@ -1,0 +1,111 @@
+library(dplyr)
+library(lubridate)
+library(forecast)
+library(caret)
+library(lattice)
+library(ggplot2)
+library(zoo)
+
+ultramarket_data <- read.csv("ultramarket.csv")
+ultramarket_A <- ultramarket_data[ultramarket_data$Branch == "A",]
+ultramarket_B <- ultramarket_data[ultramarket_data$Branch == "B",]
+ultramarket_C <- ultramarket_data[ultramarket_data$Branch == "C",]
+
+
+
+#clean data
+#add new column 'new_Date' with transformed Date format  
+ultramarket_newDate = mutate(as_tibble(ultramarket_data),new_Date=mdy(Date)) 
+#calculate total items sold of each day and arrange Date in order
+quantityOfDate<- summarise(group_by(ultramarket_newDate,new_Date),itemSold=sum(Quantity))
+View(quantityOfDate)
+
+
+# create time series object using ts()
+items.ts <- ts(quantityOfDate$itemSold, start = c(1,1), end=c(13,5), freq = 7)
+plot(items.ts, xlab = "week", ylab = "Items",
+     main = "Time plot of daily sold items over 3 month period")
+
+
+#calculate autocorrelation to test seasonality--->no seasonality
+Acf(items.ts) # due to noise no seasonality
+Pacf(items.ts)
+
+#splitting the data
+#train data has 63 observations, 85%
+#validation data has 26 observations, 15%
+train.ts <- window(items.ts,start = c(1, 1),end = c(11, 5 ))
+valid.ts <- window(items.ts,start = c(11, 6),end = c(13, 5))
+# validation should be 1 week only (nature of the data)
+
+#training model
+
+lm_nick <- tslm(train.ts ~ trend + I(trend^2) + season)
+MA_model <- rollmean(train.ts, k=7, align = "right") #trailing moving average
+ARIMA_model <- auto.arima(train.ts)
+ANA_Expo_model <- ets(train.ts, model = "ANA") #additive error, no trend, additive seasonality
+ANN_Expo_model <- ets(train.ts, model = "ANN") #additive error, no trend, no seasonality
+AUTO_Expo_model <- ets(train.ts, model = "ZZZ")
+
+
+#prediction
+#MA_pred <- predict()
+last.ma <- tail(MA_model, 1) #take last moving average value of the last point in our training data
+MA_pred <- ts( rep(last.ma, 14),start = c(11, 6), end = c(13, 5),freq = 7 )
+
+ARIMA_pred <- forecast(ARIMA_model, h = 14)
+ANA_Expo_pred <- forecast(ANA_Expo_model, h = 14)
+ANN_Expo_pred <- forecast(ANN_Expo_model, h = 14)
+AUTO_Expo_pred <- forecast(AUTO_Expo_model, h = 14)
+lm_pred <- forecast(lm_nick, h = 14)
+
+accuracy(ARIMA_pred)
+accuracy(ANA_Expo_pred)
+accuracy(ANN_Expo_pred)
+accuracy(AUTO_Expo_pred)
+accuracy(lm_pred)
+
+#plot results
+
+plot(items.ts, xlab = "week", ylab = "Items",
+     main = "Time plot of daily sold items over 3 month period")
+lines(valid.ts, col = "red")
+lines(lm_pred$fitted, col = "pink")
+lines(lm_pred$mean, col = "pink")
+#Moving Average 
+lines(MA_model, lwd = 2, col = "blue") 
+lines(MA_pred,lwd = 2,col = "blue",lty = 2) #predicted MA for validation 
+
+
+#ARIMA 
+lines(ARIMA_pred$fitted, lwd = 2, col = "blue")
+ARIMA_pred$mean
+ARIMA_pred
+
+#ANA Exponential Model
+lines(ANA_Expo_model$fitted, lwd = 2, col = "green") 
+lines(ANA_Expo_pred$mean,lwd = 2,col = "green",lty = 2) #predicted for validation
+
+#ANN Exponential Model 
+lines(ANN_Expo_model$fitted, lwd = 2, col = "purple")
+lines(ANN_Expo_pred$mean,lwd = 2,col = "purple",lty = 2) #predicted for validation
+
+#AUTO Exponential Model
+lines(AUTO_Expo_model$fitted, lwd = 2, col = "orange")
+lines(AUTO_Expo_pred$mean,lwd = 2,col = "orange",lty = 2) #predicted for validation
+AUTO_Expo_pred$model
+
+# from ets, we identify no mult. seas or trend, 
+# es wi
+  
+#performance on validation data
+accuracy(MA_pred, valid.ts)
+accuracy(ARIMA_pred, valid.ts)
+accuracy(ANA_Expo_pred, valid.ts)
+accuracy(ANN_Expo_pred, valid.ts)
+accuracy(AUTO_Expo_pred, valid.ts)
+
+
+
+
+                      
